@@ -227,7 +227,7 @@ static void load_config(struct brubeck_server *server, const char *path)
 	if (expire) server->fd_expire = load_timerfd(expire);
 }
 
-void brubeck_server_init(struct brubeck_server *server, const char *config)
+void brubeck_server_init(struct brubeck_server *server, const char *config, server_mode_t mode)
 {
 	memset(server, 0x0, sizeof(struct brubeck_server));
 
@@ -238,6 +238,9 @@ void brubeck_server_init(struct brubeck_server *server, const char *config)
 	server->fd_signal = load_signalfd();
 	server->fd_update = load_timerfd(1);
 	server->fd_expire = -1;
+
+	/** set the mode of server **/
+	server->mode = mode;
 
 	/* init the memory allocator */
 	brubeck_slab_init(&server->slab);
