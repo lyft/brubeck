@@ -17,8 +17,6 @@ int main(int argc, char *argv[])
 
 	int opt;
 
-	event_init();
-
 	while ((opt = getopt_long(argc, argv, ":l:c:v", longopts, NULL)) != -1) {
 		switch (opt) {
 		case 'l': log_file = optarg; break;

@@ -1,11 +1,6 @@
 #ifndef __BRUBECK_SERVER_H__
 #define __BRUBECK_SERVER_H__
 
-typedef enum brubeck_server_mode {
-    UDP_MODE = 0,                   /* udp mode */
-    TCP_MODE		          /* tcp mode */
-} server_mode_t;
-
 // Server
 struct brubeck_server {
 	const char *name;
@@ -18,9 +13,6 @@ struct brubeck_server {
 	int fd_signal;
 	int fd_expire;
 	int fd_update;
-
-	/** tcp/udp mode of the server **/
-	server_mode_t mode;
 
 	struct brubeck_slab slab;
 

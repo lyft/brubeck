@@ -312,6 +312,7 @@ brubeck_statsd_new(struct brubeck_server *server, json_t *settings)
 	int multisock = 0;
 
 	std->sampler.type = BRUBECK_SAMPLER_STATSD;
+	std->sampler.mode = UDP;
 	std->sampler.shutdown = &shutdown_sampler;
 	std->sampler.in_sock = -1;
 	std->worker_count = 4;
