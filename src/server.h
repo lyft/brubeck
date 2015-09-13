@@ -3,7 +3,7 @@
 
 typedef enum brubeck_server_mode {
     UDP_MODE = 0,                   /* udp mode */
-    TCP_MODE			/* tcp mode */
+    TCP_MODE		          /* tcp mode */
 } server_mode_t;
 
 // Server
@@ -61,7 +61,7 @@ void brubeck_internal__sample(struct brubeck_metric *metric, brubeck_sample_cb s
 void brubeck_server_new_metric(struct brubeck_server *server, struct brubeck_metric *metric);
 
 int brubeck_server_run(struct brubeck_server *server);
-void brubeck_server_init(struct brubeck_server *server, const char *config, server_mode_t mode);
+void brubeck_server_init(struct brubeck_server *server, const char *config);
 void brubeck_server_conf(struct brubeck_server *server, int argc, char *argv[]);
 
 void brubeck_cache_load(struct brubeck_server *server);

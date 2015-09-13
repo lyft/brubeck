@@ -124,11 +124,25 @@ static void load_samplers(struct brubeck_server *server, json_t *samplers)
 
 	json_array_foreach(samplers, idx, s) {
 		const char *type = json_string_value(json_object_get(s, "type"));
+		const char *mode = json_string_value(json_object_get(s, "mode"));
 
 		if (type && !strcmp(type, "statsd")) {
-			server->samplers[server->active_samplers++] = brubeck_statsd_new(server, s);
+			if (!mode || !strcmp(mode, "udp")) {
+				// Defaults to UDP mode
+				server->samplers[server->active_samplers++] = brubeck_statsd_new(server, s);
+			} else {
+				// TODO: Implement ME
+				log_splunk("IMPLEMENT ME!!!!");
+			}
+			log_splunk("sampler=%s, mode=%s", type, mode);
 		} else if (type && !strcmp(type, "statsd-secure")) {
-			server->samplers[server->active_samplers++] = brubeck_statsd_secure_new(server, s);
+			if (!mode || !strcmp(mode, "udp")) {
+				server->samplers[server->active_samplers++] = brubeck_statsd_secure_new(server, s);
+			} else {
+				// TODO: Implement ME
+				log_splunk("IMPLEMENT ME!!!!");
+			}
+			log_splunk("sampler=%s, mode=%s", type, mode);
 		} else {
 			log_splunk("sampler=%s event=invalid_sampler", type);
 		}
@@ -227,7 +241,7 @@ static void load_config(struct brubeck_server *server, const char *path)
 	if (expire) server->fd_expire = load_timerfd(expire);
 }
 
-void brubeck_server_init(struct brubeck_server *server, const char *config, server_mode_t mode)
+void brubeck_server_init(struct brubeck_server *server, const char *config)
 {
 	memset(server, 0x0, sizeof(struct brubeck_server));
 
@@ -238,9 +252,6 @@ void brubeck_server_init(struct brubeck_server *server, const char *config, serv
 	server->fd_signal = load_signalfd();
 	server->fd_update = load_timerfd(1);
 	server->fd_expire = -1;
-
-	/** set the mode of server **/
-	server->mode = mode;
 
 	/* init the memory allocator */
 	brubeck_slab_init(&server->slab);

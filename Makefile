@@ -1,6 +1,6 @@
 GIT_SHA = $(shell git rev-parse --short HEAD)
 TARGET = brubeck
-LIBS = -lm -pthread -lrt -lcrypto -ljansson -levent
+LIBS = -lm -pthread -lrt -lcrypto -ljansson -levent -lpthread
 CC = gcc
 CXX = g++
 CFLAGS = -g -Wall -O3 -Wno-strict-aliasing -Isrc -Ivendor/ck/include -DNDEBUG=1 -DGIT_SHA=\"$(GIT_SHA)\"
