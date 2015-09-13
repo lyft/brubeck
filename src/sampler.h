@@ -43,6 +43,15 @@ static inline const char *brubeck_sampler_name(struct brubeck_sampler *sampler)
 	}
 }
 
+static inline const char *brubeck_sampler_mode(struct brubeck_sampler *sampler)
+{
+	switch (sampler->mode) {
+		case UDP: return "udp";
+		case TCP: return "tcp";
+		default: return NULL;
+	}
+}
+
 #include "samplers/statsd.h"
 
 #endif
