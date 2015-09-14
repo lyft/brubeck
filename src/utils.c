@@ -104,11 +104,14 @@ void url_to_inaddr2(struct sockaddr_in *addr, const char *url, int port)
 
 		freeaddrinfo(result);
 	} else {
+		memset(addr, 0x0, sizeof(struct sockaddr_in));
 		addr->sin_family = AF_INET;
+		/* Listen on 0.0.0.0 */
+		addr->sin_addr.s_addr = 0;
 		addr->sin_port = htons(port);
-		addr->sin_addr.s_addr = htonl(INADDR_ANY);
 	}
 }
+
 
 #define FLOAT_PRECISION 4
 
