@@ -1,0 +1,38 @@
+{
+  "sharding" : false,
+  "server_name" : "brubeck_debug",
+  "dumpfile" : "./brubeck.dump",
+  "capacity" : 15,
+  "expire" : 5,
+  "http" : ":8080",
+
+  "backends" : [
+    {
+      "type" : "carbon",
+      "address" : "graphite-development-iad-onebox.lyft.net",
+      "port" : 2013,
+      "frequency" : 10
+    }
+  ],
+
+  "samplers" : [
+    {
+      "type" : "statsd",
+      "address" : "0.0.0.0",
+      "port" : 9876,
+      "workers" : 4,
+      "multisock" : true,
+      "multimsg" : 8,
+      "mode": "tcp"
+    },
+    {
+      "type" : "statsd-secure",
+      "address" : "0.0.0.0",
+      "port" : 9126,
+      "max_drift" : 3,
+      "hmac_key" : "750c783e6ab0b503eaa86e310a5db738",
+      "replay_len" : 8000,
+      "mode": "udp"
+    }
+  ]
+}
