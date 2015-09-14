@@ -12,18 +12,37 @@ brubeck_sampler_init_inet(struct brubeck_sampler *sampler, struct brubeck_server
 
 int brubeck_sampler_socket(struct brubeck_sampler *sampler, int multisock)
 {
-	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (!strcmp(brubeck_sampler_mode(sampler), "udp")) {
+		int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-	assert(sock >= 0);
+		assert(sock >= 0);
 
-	sock_enlarge_in(sock);
-	sock_setreuse(sock, 1);
-	
-	if (multisock)
-		sock_setreuse_port(sock, 1);
+		sock_enlarge_in(sock);
+		sock_setreuse(sock, 1);
 
-	if (bind(sock, (struct sockaddr *)&sampler->addr, sizeof(sampler->addr)) < 0)
-		die("failed to bind socket");
+		if (multisock)
+			sock_setreuse_port(sock, 1);
 
-	return sock;
+		if (bind(sock, (struct sockaddr *)&sampler->addr, sizeof(sampler->addr)) < 0)
+			die("failed to bind socket");
+
+		return sock;
+	} else {
+		evutil_socket_t sock;
+
+		sock = socket(AF_INET, SOCK_STREAM, 0);
+		evutil_make_socket_nonblocking(sock);
+
+		#ifndef WIN32
+		{
+			int one = 1;
+			setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one));
+		}
+		#endif
+
+		if (bind(sock, (struct sockaddr*)&sampler->addr, sizeof(sampler->addr)) < 0)
+			die("failed to bind socket");
+
+		return sock;
+	}
 }

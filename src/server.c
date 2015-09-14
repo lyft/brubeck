@@ -131,8 +131,7 @@ static void load_samplers(struct brubeck_server *server, json_t *samplers)
 				// Defaults to UDP mode
 				server->samplers[server->active_samplers++] = brubeck_statsd_new(server, s);
 			} else {
-				// TODO: Implement ME
-				log_splunk("IMPLEMENT ME!!!!");
+				server->samplers[server->active_samplers++] = brubeck_statsd_tcp_new(server, s);
 			}
 			log_splunk("sampler=%s, mode=%s", type, mode);
 		} else if (type && !strcmp(type, "statsd-secure")) {

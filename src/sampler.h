@@ -53,6 +53,7 @@ static inline const char *brubeck_sampler_mode(struct brubeck_sampler *sampler)
 }
 
 #include "samplers/statsd.h"
+#include "samplers/statsd-tcp.h"
 
 #endif
 

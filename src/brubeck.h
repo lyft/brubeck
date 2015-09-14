@@ -35,6 +35,7 @@ struct brubeck_metric;
 #include "event2/buffer.h"
 #include "event2/bufferevent.h"
 #include "event2/dns.h"
+#include "event2/listener.h"
 #include "jansson.h"
 #include "log.h"
 #include "utils.h"
