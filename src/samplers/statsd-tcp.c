@@ -10,7 +10,7 @@
 #   endif
 #endif
 
-#define MAX_PACKET_SIZE 512
+#define MAX_PACKET_SIZE 64
 
 #define MAX_LINE 16384
 #define CONNECTION_BACKLOG 16
@@ -234,9 +234,6 @@ read_cb(struct bufferevent *bev, void *ctx)
 
         free(iovec_buffer);
 
-        /**
-          * TODO: enable me!
-          */
         brubeck_atomic_inc(&server->stats.metrics);
         brubeck_atomic_inc(&statsd->sampler.inflow);
 
@@ -256,9 +253,6 @@ read_cb(struct bufferevent *bev, void *ctx)
             log_splunk("sampler=statsd_tcp event=bad_key key='%.*s'",
                 written, buffer);
 
-            /**
-              * TODO: enable this 
-              */
             brubeck_server_mark_dropped(server);
         }
         evbuffer_drain(input, successfully_parsed);
