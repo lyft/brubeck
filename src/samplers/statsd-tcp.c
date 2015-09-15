@@ -183,6 +183,10 @@ brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, char *buffer, s
             
         if (*buffer == '@' || *buffer == '|') {
             msg->trail = buffer;
+            /**
+              * TODO: fix me!
+              * not the true EOM
+              */
             return (buffer - start);
         }
 
@@ -207,9 +211,9 @@ read_cb(struct bufferevent *bev, void *ctx)
         
         buffer = xmalloc(sizeof(char) * MAX_PACKET_SIZE);
 
-        //statsd = ctx;
-        // if (statsd != NULL)
-        //     server = statsd->sampler.server;
+        statsd = ctx;
+        if (statsd != NULL)
+            server = statsd->sampler.server;
 
         /* determine how many chunks we need. */
         num_chunks = evbuffer_peek(input, MAX_PACKET_SIZE, NULL, NULL, 0);
@@ -225,16 +229,16 @@ read_cb(struct bufferevent *bev, void *ctx)
             }
         }
         buffer[written] = '\0';
-        buffer = (char *) realloc(buffer, written);
-        log_splunk("The number of bytes in the buffer %zd", written);
+        buffer = (char *) realloc(buffer, written + 1);
+        log_splunk("The number of bytes in the buffer %zd", written + 1);
 
         free(iovec_buffer);
 
         /**
           * TODO: enable me!
           */
-        // brubeck_atomic_inc(&server->stats.metrics);
-        // brubeck_atomic_inc(&statsd->sampler.inflow);
+        brubeck_atomic_inc(&server->stats.metrics);
+        brubeck_atomic_inc(&statsd->sampler.inflow);
 
         /**
           *  Parse the input bytes, drain the successfully parsed bytes
@@ -255,7 +259,7 @@ read_cb(struct bufferevent *bev, void *ctx)
             /**
               * TODO: enable this 
               */
-            //brubeck_server_mark_dropped(server);
+            brubeck_server_mark_dropped(server);
         }
         evbuffer_drain(input, successfully_parsed);
 
