@@ -20,6 +20,7 @@ struct brubeck_statsd_tcp {
 
     /* The event_base for this client. */
     struct event_base *evbase;
+    evutil_socket_t fd;
 };
 
 struct evbuffer_info {

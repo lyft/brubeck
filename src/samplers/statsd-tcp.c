@@ -61,6 +61,8 @@ int
 brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, char *buffer, size_t length)
 {
     char *end = buffer + length;
+
+    char *start = buffer;
     *end = '\0';
 
     /**
@@ -176,34 +178,38 @@ brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, char *buffer, s
 
         if (buffer[0] == '\0' || (buffer[0] == '\n' && buffer[1] == '\0')) {
             msg->trail = NULL;
-            return 0;
+            return (buffer - start);
         }
             
         if (*buffer == '@' || *buffer == '|') {
             msg->trail = buffer;
-            return 0;
+            return (buffer - start);
         }
 
         return -1;
     }
 }
 
-
 static void
 read_cb(struct bufferevent *bev, void *ctx)
 {
-        struct brubeck_statsd_tcp *statsd = ctx;
-        //log_splunk("Worker count in the callback %d", statsd->worker_count);
-        //struct brubeck_server *server = statsd->sampler.server;
+        int num_chunks, i, j, successfully_parsed = 0;
+        struct evbuffer_iovec *iovec_buffer;
+        char *buffer;
+        size_t written = 0;
+        struct brubeck_statsd_tcp *statsd;
+        struct brubeck_server *server;
+
+        struct brubeck_statsd_msg msg;
 
         /* This callback is invoked when there is data to read on bev. */
         struct evbuffer *input = bufferevent_get_input(bev);
-        //struct evbuffer *output = bufferevent_get_output(bev);
+        
+        buffer = xmalloc(sizeof(char) * MAX_PACKET_SIZE);
 
-        int num_chunks, i, j, successfully_parsed = 0;
-        struct evbuffer_iovec *iovec_buffer;
-        char *buffer = malloc(sizeof(char) * MAX_PACKET_SIZE);
-        size_t written = 0;
+        //statsd = ctx;
+        // if (statsd != NULL)
+        //     server = statsd->sampler.server;
 
         /* determine how many chunks we need. */
         num_chunks = evbuffer_peek(input, MAX_PACKET_SIZE, NULL, NULL, 0);
@@ -223,12 +229,13 @@ read_cb(struct bufferevent *bev, void *ctx)
         log_splunk("The number of bytes in the buffer %zd", written);
 
         free(iovec_buffer);
-        evbuffer_drain(input, written);
-        free(buffer);
+
+        /**
+          * TODO: enable me!
+          */
         // brubeck_atomic_inc(&server->stats.metrics);
         // brubeck_atomic_inc(&statsd->sampler.inflow);
 
-        //successfully_parsed = ();
         /**
           *  Parse the input bytes, drain the successfully parsed bytes
           *  return parsed bytes count.
@@ -236,19 +243,27 @@ read_cb(struct bufferevent *bev, void *ctx)
           *  2. Return  the number of bytes "successfully" parsed
           *  3. Drain "successfully" parsed bytes
           *  4. Return.
-          */
+          */          
+        successfully_parsed = brubeck_statsd_tcp_msg_parse(&msg, buffer, (size_t)written);
+        if (successfully_parsed < 0) {
+            if (msg.key_len > 0)
+                buffer[msg.key_len] = ':';
 
-        //size_t num_bytes_parsed = brubeck_statsd_tcp_msg_parse
-        // size_t len = evbuffer_get_length(input);
-        // log_splunk("Number of bytes available %zd\n", len);
-        // if (len) {
-        //     info->total_drained += len;
-        //     evbuffer_drain(input, len);
-        //     log_splunk("Drained %lu bytes from %s\n", (unsigned long) len, info->name);
-        // }        
+            log_splunk("sampler=statsd_tcp event=bad_key key='%.*s'",
+                written, buffer);
 
-        // /* Copy all the data from the input buffer to the output buffer. */
-        // evbuffer_add_buffer(output, input);
+            /**
+              * TODO: enable this 
+              */
+            //brubeck_server_mark_dropped(server);
+        }
+        evbuffer_drain(input, successfully_parsed);
+
+        log_splunk("sampler=statsd_tcp event=parsed key=%s bytes=%zd", msg.key, msg.key_len);
+        log_splunk("sampler=statsd_tcp msg=Drained %zd bytes from it, "
+            "and have %zd left.\n", successfully_parsed, evbuffer_get_length(input));
+
+        free(buffer);
 }
 
 static void
@@ -281,12 +296,8 @@ event_cb(struct bufferevent *bev, short events, void *ctx)
     }
 
     if (finished) {
-        free(ctx);
         bufferevent_free(bev);
-        /**
-          * TODO: Enable
-          */
-        //brubeck_server_mark_dropped(statsd->sampler.server);
+        brubeck_server_mark_dropped(statsd->sampler.server);
     }
 }
 
@@ -295,7 +306,7 @@ accept_conn_cb(struct evconnlistener *listener,
     evutil_socket_t fd, struct sockaddr *address, int socklen,
     void *ctx)
 {
-        struct brubeck_statsd_tcp *statsd = ctx;
+        struct brubeck_statsd_tcp *statsd = (struct brubeck_statsd_tcp *)ctx;
         log_splunk("Got a new connection for server");
 
         /* We got a new connection! Set up a bufferevent for it. */
@@ -303,11 +314,20 @@ accept_conn_cb(struct evconnlistener *listener,
         struct bufferevent *bev = bufferevent_socket_new(
                 base, fd, BEV_OPT_CLOSE_ON_FREE);
 
+        /**
+          * Cache FD and Base pointers 
+          * for future needs
+          */
+        if (statsd != NULL) {
+            statsd->evbase = base;
+            statsd->fd = fd;
+        }
+
         /* Trigger the read callback only whenever there is at least 10 bytes
         of data in the buffer. */
         bufferevent_setwatermark(bev, EV_READ, MIN_READ_WATERMARK, 0);
 
-        bufferevent_setcb(bev, read_cb, statsd, event_cb, statsd);
+        bufferevent_setcb(bev, read_cb, NULL, event_cb, statsd);
         bufferevent_settimeout(bev, SOCKET_READ_TIMEOUT_SECONDS, SOCKET_WRITE_TIMEOUT_SECONDS);
 
         bufferevent_enable(bev, EV_READ|EV_WRITE);
@@ -327,7 +347,7 @@ accept_error_cb(struct evconnlistener *listener, void *ctx)
 struct brubeck_sampler *
 brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
 {
-    struct brubeck_statsd_tcp *std = xmalloc(sizeof(struct brubeck_statsd_tcp));
+    struct brubeck_statsd_tcp *std = malloc(sizeof(struct brubeck_statsd_tcp));
 
     char *address;
     int port;
@@ -356,11 +376,7 @@ brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
 
     brubeck_sampler_init_inet(&std->sampler, server, NULL, port);
 
-    // so that we can end the loop
-    std->evbase = base;
-
-    log_splunk("The typeof is %d", std->worker_count);
-    listener = evconnlistener_new_bind(base, accept_conn_cb, NULL,
+    listener = evconnlistener_new_bind(base, accept_conn_cb, std,
         LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1,
         (struct sockaddr*)&std->sampler.addr, sizeof(std->sampler.addr));
 
