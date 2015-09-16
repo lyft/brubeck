@@ -31,8 +31,6 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	/** Initialize **/
-	event_init();
 	initproctitle(argc, argv);
 	gh_log_open(log_file);
 	brubeck_server_init(&_server, config_file);
