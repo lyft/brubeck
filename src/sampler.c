@@ -12,20 +12,18 @@ brubeck_sampler_init_inet(struct brubeck_sampler *sampler, struct brubeck_server
 
 int brubeck_sampler_socket(struct brubeck_sampler *sampler, int multisock)
 {
-	if (!strcmp(brubeck_sampler_mode(sampler), "udp")) {
-		int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	int sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
-		assert(sock >= 0);
+	assert(sock >= 0);
 
-		sock_enlarge_in(sock);
-		sock_setreuse(sock, 1);
+	sock_enlarge_in(sock);
+	sock_setreuse(sock, 1);
 
-		if (multisock)
-			sock_setreuse_port(sock, 1);
+	if (multisock)
+		sock_setreuse_port(sock, 1);
 
-		if (bind(sock, (struct sockaddr *)&sampler->addr, sizeof(sampler->addr)) < 0)
-			die("failed to bind socket");
+	if (bind(sock, (struct sockaddr *)&sampler->addr, sizeof(sampler->addr)) < 0)
+		die("failed to bind socket");
 
-		return sock;
-	}
+	return sock;
 }

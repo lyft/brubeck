@@ -4,11 +4,11 @@
 #include "bloom.h"
 
 struct brubeck_statsd_tcp_msg {
-    unsigned char *key;      /* The key of the message, NULL terminated */
+    char *key;      /* The key of the message, NULL terminated */
     uint16_t key_len; /* length of the key */
     uint16_t type;  /* type of the t, as a brubeck_mt_t */
     value_t value;  /* integer value of the message */
-    unsigned char *trail;    /* Any data following the 'key:value|type' construct, NULL terminated*/
+    char *trail;    /* Any data following the 'key:value|type' construct, NULL terminated*/
     uint16_t trail_len; /* The length of the trailing string */
 };
 
@@ -57,7 +57,7 @@ struct brubeck_statsd_client_connection {
 typedef struct brubeck_statsd_client_connection brubeck_client_t;
 
 
-int brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, unsigned char *buffer, size_t length);
+int brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, char *buffer, size_t length);
 
 struct brubeck_sampler * brubeck_statsd_secure_tcp_new(struct brubeck_server *server, json_t *settings);
 struct brubeck_sampler *brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings);

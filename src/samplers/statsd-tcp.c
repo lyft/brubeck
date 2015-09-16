@@ -27,12 +27,12 @@
 }
 
 int
-brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, unsigned char *buffer, size_t length)
+brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, char *buffer, size_t length)
 {
-    unsigned char *end = buffer + length;
+    char *end = buffer + length;
     int total = 1;
 
-    unsigned char *start;
+    char *start;
     *end = '\0';
 
     /**
@@ -98,7 +98,7 @@ brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, unsigned char *
             while (*buffer >= '0' && *buffer <= '9') {
                 f = (f * 10.0) + (*buffer - '0');
                 ++buffer;
-                +total;
+                ++total;
                 n += 1.0;
             }
 
@@ -109,7 +109,7 @@ brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, unsigned char *
             msg->value = -msg->value;
 
         if (unlikely(*buffer == 'e')) {
-            msg->value = strtod(start, (char *)&buffer);
+            msg->value = strtod(start, &buffer);
         }
 
         if (*buffer != '|')
@@ -165,13 +165,13 @@ brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, unsigned char *
         if (*buffer == '@' || *buffer == '|') {
             msg->trail = buffer;
 
-            unsigned char *ptr = buffer;
+            char *ptr = buffer;
             while (*ptr++) {
                 total++;
                 if (*ptr == '\n') {
                     msg->trail_len = strlen(msg->trail) - 1;
-                    msg->trail = (char *)malloc(sizeof(unsigned char) * msg->trail_len);
-                    strncpy(msg->trail, buffer, msg->trail_len);
+                    msg->trail = (char *)malloc(sizeof(char) * msg->trail_len);
+                    strncpy(msg->trail, (char *)buffer, msg->trail_len);
                     msg->trail[msg->trail_len] = '\0';
                     return total;
                 }
@@ -190,7 +190,7 @@ static void
 read_cb(struct bufferevent *bev, void *ctx)
 {
         int successfully_parsed = 0;
-        unsigned char *buffer;
+        char *buffer;
         struct brubeck_statsd_tcp *statsd;
         struct brubeck_server *server;
 
@@ -202,7 +202,7 @@ read_cb(struct bufferevent *bev, void *ctx)
         statsd = ctx;
         server = statsd->sampler.server;
 
-        buffer= evbuffer_pullup(input, -1);
+        buffer= (char *)evbuffer_pullup(input, -1);
 
         /**
           *  Parse the input bytes, drain the successfully parsed bytes
@@ -218,7 +218,7 @@ read_cb(struct bufferevent *bev, void *ctx)
                 buffer[msg.key_len] = ':';
 
             log_splunk("sampler=statsd_tcp event=bad_key key='%.*s'",
-                strlen(buffer), buffer);
+                (int)strlen(buffer), buffer);
 
             brubeck_server_mark_dropped(server);
         } else {
@@ -319,7 +319,7 @@ accept_error_cb(struct evconnlistener *listener, void *ctx)
 static void
 *statsd__thread(void *_in)
 {
-    struct brubeck_statsd *statsd = _in;
+    struct brubeck_statsd_tcp *statsd = _in;
     struct event_base *base;
     struct evconnlistener *listener;
 
