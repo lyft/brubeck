@@ -6,7 +6,6 @@ int main(int argc, char *argv[])
 	static struct option longopts[] = {
 		{ "log", required_argument, NULL, 'l' },
 		{ "config", required_argument, NULL, 'c' },
-		{ "tcp_mode", no_argument, NULL, 't' },
 		{ "version", no_argument, NULL,	'v' },
 		{ NULL,  0,  NULL, 0 }
 	};
