@@ -41,6 +41,10 @@ struct brubeck_statsd_secure_tcp {
     time_t drift;
 
     pthread_t thread;
+
+    /* The event_base for this client. */
+    struct event_base *evbase;
+    evutil_socket_t fd;
 };
 
 struct brubeck_statsd_client_connection {

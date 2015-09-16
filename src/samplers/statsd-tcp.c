@@ -367,7 +367,7 @@ struct brubeck_sampler *
 brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
 {
     struct brubeck_statsd_tcp *std = malloc(sizeof(struct brubeck_statsd_tcp));
-
+    struct sockaddr_in addr;
     char *address;
     int port;
     int multisock = 0;
@@ -390,7 +390,20 @@ brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
         "multimsg", &std->mmsg_count,
         "multisock", &multisock);
 
-    brubeck_sampler_init_inet(&std->sampler, server, NULL, port);
+    /**
+      * Set the server 
+      */
+    std->sampler.server = server;
+
+    addr.sin_family = AF_INET;
+    /* Listen on 0.0.0.0 */
+    addr.sin_addr.s_addr = 0;
+    addr.sin_port = htons(port);
+
+    log_splunk("sampler=%s event=load_%s addr=0.0.0.0:%d",
+        brubeck_sampler_name(&(std->sampler)), brubeck_sampler_mode(&(std->sampler)), port);
+
+    std->sampler.addr = addr;
 
     run_worker_threads(std);
     return &std->sampler;
