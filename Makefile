@@ -22,6 +22,7 @@ SOURCES = \
 	src/log.c \
 	src/metric.c \
 	src/sampler.c \
+	src/samplers/statsd-secure-tcp.c \
 	src/samplers/statsd-secure.c \
 	src/samplers/statsd.c \
 	src/samplers/statsd-tcp.c \

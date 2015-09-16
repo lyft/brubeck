@@ -10,17 +10,6 @@
 #   endif
 #endif
 
-#define MAX_PACKET_SIZE 64
-
-#define MAX_LINE 16384
-#define CONNECTION_BACKLOG 16
-#define MIN_READ_WATERMARK 10
-#define MAX_READ_WATERMARK  4096
-
-/* Socket read and write timeouts, in seconds. */
-#define SOCKET_READ_TIMEOUT_SECONDS 10
-#define SOCKET_WRITE_TIMEOUT_SECONDS 10
-
 #define error_out(...) {\
     log_splunk("%s:%d: %s():\t", __FILE__, __LINE__, __FUNCTION__);\
     log_splunk(__VA_ARGS__);\

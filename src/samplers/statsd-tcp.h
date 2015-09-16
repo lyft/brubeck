@@ -1,7 +1,21 @@
 #ifndef __BRUBECK_STATSD_TCP_H__
 #define __BRUBECK_STATSD_TCP_H__
 
+
+#include <openssl/hmac.h>
 #include "bloom.h"
+
+#define MAX_LINE 16384
+#define CONNECTION_BACKLOG 16
+#define MIN_READ_WATERMARK 10
+#define MAX_READ_WATERMARK  4096
+
+/* Socket read and write timeouts, in seconds. */
+#define SOCKET_READ_TIMEOUT_SECONDS 10
+#define SOCKET_WRITE_TIMEOUT_SECONDS 10
+
+#define SHA_SIZE 32
+#define SHA_FUNCTION EVP_sha256
 
 struct brubeck_statsd_tcp_msg {
     char *key;      /* The key of the message, NULL terminated */
@@ -45,6 +59,8 @@ struct brubeck_statsd_secure_tcp {
     /* The event_base for this client. */
     struct event_base *evbase;
     evutil_socket_t fd;
+
+    HMAC_CTX ctx;
 };
 
 struct brubeck_statsd_client_connection {
