@@ -367,7 +367,7 @@ struct brubeck_sampler *
 brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
 {
     struct brubeck_statsd_tcp *std = malloc(sizeof(struct brubeck_statsd_tcp));
-    char *address;
+    char *address = NULL;
     int port;
     int multisock = 0;
 
