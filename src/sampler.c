@@ -6,8 +6,8 @@ brubeck_sampler_init_inet(struct brubeck_sampler *sampler, struct brubeck_server
 	sampler->server = server;
 	url_to_inaddr2(&sampler->addr, url, port);
 
-	log_splunk("sampler=%s event=load_udp addr=0.0.0.0:%d",
-		brubeck_sampler_name(sampler), port);
+	log_splunk("sampler=%s event=load_%s addr=0.0.0.0:%d",
+		brubeck_sampler_name(sampler), brubeck_sampler_mode(sampler), port);
 }
 
 int brubeck_sampler_socket(struct brubeck_sampler *sampler, int multisock)
@@ -18,7 +18,7 @@ int brubeck_sampler_socket(struct brubeck_sampler *sampler, int multisock)
 
 	sock_enlarge_in(sock);
 	sock_setreuse(sock, 1);
-	
+
 	if (multisock)
 		sock_setreuse_port(sock, 1);
 

@@ -1,9 +1,9 @@
 GIT_SHA = $(shell git rev-parse --short HEAD)
 TARGET = brubeck
-LIBS = -lm -pthread -lrt -lcrypto -ljansson
+LIBS = -lm -pthread -lrt -lcrypto -ljansson -levent -lpthread
 CC = gcc
 CXX = g++
-CFLAGS = -g -Wall -O3 -Wno-strict-aliasing -Isrc -Ivendor/ck/include -DNDEBUG=1 -DGIT_SHA=\"$(GIT_SHA)\"
+CFLAGS = -g -Wall -O3 -Wno-strict-aliasing -Wunused-function -Isrc -Ivendor/ck/include -DNDEBUG=1 -DGIT_SHA=\"$(GIT_SHA)\"
 
 .PHONY: default all clean
 
@@ -24,6 +24,7 @@ SOURCES = \
 	src/sampler.c \
 	src/samplers/statsd-secure.c \
 	src/samplers/statsd.c \
+	src/samplers/statsd-tcp.c \
 	src/server.c \
 	src/setproctitle.c \
 	src/slab.c \

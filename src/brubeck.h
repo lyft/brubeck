@@ -26,9 +26,19 @@
 typedef double value_t;
 typedef uint64_t hash_t;
 
+typedef enum { false=0, true } bool;
+
 struct brubeck_server;
 struct brubeck_metric;
 
+#include <event.h>
+#include "event2/event.h"
+#include "event2/util.h"
+#include "event2/thread.h"
+#include "event2/buffer.h"
+#include "event2/bufferevent.h"
+#include "event2/dns.h"
+#include "event2/listener.h"
 #include "jansson.h"
 #include "log.h"
 #include "utils.h"

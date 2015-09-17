@@ -2,5 +2,6 @@ brubeck
 *.o
 *.swp
 *~
+a.out
 .DS_Store
 build/*

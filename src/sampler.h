@@ -6,12 +6,21 @@ enum brubeck_sampler_t {
 	BRUBECK_SAMPLER_STATSD_SECURE,
 };
 
+typedef enum brubeck_sampler_mode {
+    UDP = 0,                   /* udp mode */
+    TCP		          /* tcp mode */
+} sampler_mode_t;
+
+
 struct brubeck_sampler {
 	enum brubeck_sampler_t type;
 	struct brubeck_server *server;
 
 	int in_sock;
 	struct sockaddr_in addr;
+
+	/** tcp/udp mode of the server **/
+	sampler_mode_t mode;
 
 	size_t inflow;
 	size_t current_flow;
@@ -34,7 +43,17 @@ static inline const char *brubeck_sampler_name(struct brubeck_sampler *sampler)
 	}
 }
 
+static inline const char *brubeck_sampler_mode(struct brubeck_sampler *sampler)
+{
+	switch (sampler->mode) {
+		case UDP: return "udp";
+		case TCP: return "tcp";
+		default: return NULL;
+	}
+}
+
 #include "samplers/statsd.h"
+#include "samplers/statsd-tcp.h"
 
 #endif
 

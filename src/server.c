@@ -124,11 +124,19 @@ static void load_samplers(struct brubeck_server *server, json_t *samplers)
 
 	json_array_foreach(samplers, idx, s) {
 		const char *type = json_string_value(json_object_get(s, "type"));
+		const char *mode = json_string_value(json_object_get(s, "mode"));
 
 		if (type && !strcmp(type, "statsd")) {
-			server->samplers[server->active_samplers++] = brubeck_statsd_new(server, s);
+			if (!mode || !strcmp(mode, "udp")) {
+				// Defaults to UDP mode
+				server->samplers[server->active_samplers++] = brubeck_statsd_new(server, s);
+			} else {
+				server->samplers[server->active_samplers++] = brubeck_statsd_tcp_new(server, s);
+			}
+			log_splunk("sampler=%s, mode=%s", type, mode);
 		} else if (type && !strcmp(type, "statsd-secure")) {
 			server->samplers[server->active_samplers++] = brubeck_statsd_secure_new(server, s);
+			log_splunk("sampler=%s, mode=%s", type, mode);
 		} else {
 			log_splunk("sampler=%s event=invalid_sampler", type);
 		}

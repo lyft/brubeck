@@ -9,8 +9,8 @@
   "backends" : [
     {
       "type" : "carbon",
-      "address" : "localhost",
-      "port" : 2003,
+      "address" : "graphite-development-iad-onebox.lyft.net",
+      "port" : 2013,
       "frequency" : 10
     }
   ],
@@ -20,9 +20,9 @@
       "type" : "statsd",
       "address" : "0.0.0.0",
       "port" : 8126,
-      "workers" : 4,
+      "workers" : 1,
       "multisock" : true,
-      "multimsg" : 8,
+      "multimsg" : 1,
       "mode": "tcp"
     },
     {
@@ -32,7 +32,7 @@
       "max_drift" : 3,
       "hmac_key" : "750c783e6ab0b503eaa86e310a5db738",
       "replay_len" : 8000,
-      "mode": "tcp"  
+      "mode": "tcp"
     }
   ]
 }

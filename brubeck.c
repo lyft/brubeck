@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
 	struct brubeck_server _server;
 	const char *config_file = "config.default.json";
 	const char *log_file = NULL;
+
 	int opt;
 
 	while ((opt = getopt_long(argc, argv, ":l:c:v", longopts, NULL)) != -1) {

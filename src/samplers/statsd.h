@@ -12,21 +12,25 @@ struct brubeck_statsd_msg {
 };
 
 struct brubeck_statsd {
-	struct brubeck_sampler sampler;
-	pthread_t *workers;
-	unsigned int worker_count;
-	unsigned int mmsg_count;
+    struct brubeck_sampler sampler;
+    pthread_t *workers;
+
+    unsigned int worker_count;
+    unsigned int mmsg_count;
 };
 
 struct brubeck_statsd_secure {
-	struct brubeck_sampler sampler;
-	const char *hmac_key;
+    struct brubeck_sampler sampler;
+    const char *hmac_key;
 
-	struct multibloom *replays;
-	time_t now;
-	time_t drift;
+    /** tcp/udp mode of the server **/
+    sampler_mode_t mode;
 
-	pthread_t thread;
+    struct multibloom *replays;
+    time_t now;
+    time_t drift;
+
+    pthread_t thread;
 };
 
 int brubeck_statsd_msg_parse(struct brubeck_statsd_msg *msg, char *buffer, size_t length);
