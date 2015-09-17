@@ -135,11 +135,7 @@ static void load_samplers(struct brubeck_server *server, json_t *samplers)
 			}
 			log_splunk("sampler=%s, mode=%s", type, mode);
 		} else if (type && !strcmp(type, "statsd-secure")) {
-			if (!mode || !strcmp(mode, "udp")) {
-				server->samplers[server->active_samplers++] = brubeck_statsd_secure_new(server, s);
-			} else {
-				server->samplers[server->active_samplers++] = brubeck_statsd_secure_tcp_new(server, s);
-			}
+			server->samplers[server->active_samplers++] = brubeck_statsd_secure_new(server, s);
 			log_splunk("sampler=%s, mode=%s", type, mode);
 		} else {
 			log_splunk("sampler=%s event=invalid_sampler", type);
