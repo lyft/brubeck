@@ -32,6 +32,9 @@ int main(int argc, char *argv[])
 
 	sput_enter_suite("statsd: packet parsing");
 	sput_run_test(test_statsd_msg__parse_strings);
+	
+	sput_enter_suite("statsd tcp: packet parsing");
+	sput_run_test(test_statsd_tcp_msg__parse_strings);
 
 	sput_finish_testing();
 	return sput_get_return_value();

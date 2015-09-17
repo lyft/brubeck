@@ -1,5 +1,6 @@
 #include <stddef.h>
 #define _GNU_SOURCE
+#include <stdlib.h>
 #include <sys/uio.h>
 #include <sys/socket.h>
 #include "brubeck.h"
@@ -9,6 +10,14 @@
 #       define HAVE_RECVMMSG 1
 #   endif
 #endif
+
+#define MAX_LINE 16384
+#define CONNECTION_BACKLOG 16
+#define MIN_READ_WATERMARK 10
+#define MAX_READ_WATERMARK  4096
+#define SOCKET_READ_TIMEOUT_SECONDS 10
+#define SOCKET_WRITE_TIMEOUT_SECONDS 10
+
 
 #define error_out(...) {\
     log_splunk("%s:%d: %s():\t", __FILE__, __LINE__, __FUNCTION__);\
@@ -75,9 +84,12 @@ brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, char *buffer, s
 
         while (*buffer >= '0' && *buffer <= '9') {
             msg->value = (msg->value * 10.0) + (*buffer - '0');
+            if (msg->value != 0.0) {
+                ++total;
+            }
             ++buffer;
-            ++total;
         }
+
 
         if (*buffer == '.') {
             double f = 0.0, n = 0.0;
@@ -134,7 +146,6 @@ brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, char *buffer, s
         }
     }
 
-
     /**
      * Trailing bytes: data appended at the end of the message.
      * This is stored verbatim and will be parsed when processing
@@ -147,6 +158,7 @@ brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, char *buffer, s
         buffer++;
 
         if (buffer[0] == '\n') {
+            total++;
             msg->trail = NULL;
             return total;
         }
@@ -162,7 +174,7 @@ brubeck_statsd_tcp_msg_parse(struct brubeck_statsd_tcp_msg *msg, char *buffer, s
                     msg->trail = (char *)malloc(sizeof(char) * msg->trail_len);
                     strncpy(msg->trail, (char *)buffer, msg->trail_len);
                     msg->trail[msg->trail_len] = '\0';
-                    return total;
+                    return ++total;
                 }
             }
             /**
@@ -217,8 +229,8 @@ read_cb(struct bufferevent *bev, void *ctx)
             brubeck_atomic_inc(&server->stats.metrics);
             brubeck_atomic_inc(&statsd->sampler.inflow);
 
-            // Reject the newline charecter too
-            evbuffer_drain(input, successfully_parsed + 1);
+            // Drain the successfully parsed
+            evbuffer_drain(input, successfully_parsed);
 
             log_splunk("sampler=statsd_tcp event=parsed key=%s key len bytes=%d", msg.key, msg.key_len);
             log_splunk("sampler=statsd_tcp msg=Drained %d bytes from it, "
@@ -285,7 +297,7 @@ accept_conn_cb(struct evconnlistener *listener,
 
         /* Trigger the read callback only whenever there is at least 10 bytes
         of data in the buffer. */
-        bufferevent_setwatermark(bev, EV_READ, MIN_READ_WATERMARK, MAX_READ_WATERMARK);
+        bufferevent_setwatermark(bev, EV_READ, 0, MAX_READ_WATERMARK);
 
         bufferevent_setcb(bev, read_cb, NULL, event_cb, statsd);
         bufferevent_settimeout(bev, SOCKET_READ_TIMEOUT_SECONDS, SOCKET_WRITE_TIMEOUT_SECONDS);
@@ -316,12 +328,11 @@ static void
     assert(base != NULL);
 
     listener = evconnlistener_new_bind(base, accept_conn_cb, statsd,
-        LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, -1,
+        LEV_OPT_CLOSE_ON_FREE|LEV_OPT_REUSEABLE, 16,
         (struct sockaddr*)&statsd->sampler.addr, sizeof(statsd->sampler.addr));
 
     if (!listener) {
-        log_splunk("Unable to create listener");
-        assert(listener);
+        die("Unable to create listener");
     }
     evconnlistener_set_error_cb(listener, accept_error_cb);
 
@@ -356,7 +367,6 @@ struct brubeck_sampler *
 brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
 {
     struct brubeck_statsd_tcp *std = malloc(sizeof(struct brubeck_statsd_tcp));
-    struct sockaddr_in addr;
     char *address;
     int port;
     int multisock = 0;
@@ -382,17 +392,10 @@ brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
     /**
       * Set the server 
       */
+
+    brubeck_sampler_init_inet(&std->sampler, server, address, port);
+
     std->sampler.server = server;
-
-    addr.sin_family = AF_INET;
-    /* Listen on 0.0.0.0 */
-    addr.sin_addr.s_addr = 0;
-    addr.sin_port = htons(port);
-
-    log_splunk("sampler=%s event=load_%s addr=0.0.0.0:%d",
-        brubeck_sampler_name(&(std->sampler)), brubeck_sampler_mode(&(std->sampler)), port);
-
-    std->sampler.addr = addr;
 
     run_worker_threads(std);
     return &std->sampler;

@@ -32,7 +32,7 @@
       "max_drift" : 3,
       "hmac_key" : "750c783e6ab0b503eaa86e310a5db738",
       "replay_len" : 8000,
-      "mode": "tcp"
+      "mode": "udp"
     }
   ]
 }
