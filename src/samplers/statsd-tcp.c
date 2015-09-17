@@ -230,7 +230,10 @@ read_cb(struct bufferevent *bev, void *ctx)
             brubeck_atomic_inc(&statsd->sampler.inflow);
 
             // Drain the successfully parsed
-            evbuffer_drain(input, successfully_parsed);
+            if (evbuffer_drain(input, successfully_parsed) < 0) {
+                error_out("Couldn't drain the buffer successfully :(");
+                die("Stopping the thread.");
+            }
 
             log_splunk("sampler=statsd_tcp event=parsed key=%s key len bytes=%d", msg.key, msg.key_len);
             log_splunk("sampler=statsd_tcp msg=Drained %d bytes from it, "
@@ -316,7 +319,6 @@ accept_error_cb(struct evconnlistener *listener, void *ctx)
         event_base_loopexit(base, NULL);
 }
 
-
 static void
 *statsd__thread(void *_in)
 {
@@ -345,7 +347,6 @@ run_worker_threads(struct brubeck_statsd_tcp *statsd)
 {
     unsigned int i;
     statsd->workers = xmalloc(statsd->worker_count * sizeof(pthread_t));
-
     for (i = 0; i < statsd->worker_count; ++i) {
         if (pthread_create(&statsd->workers[i], NULL, &statsd__thread, statsd) != 0)
             die("failed to start sampler thread");
@@ -369,7 +370,6 @@ brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
     struct brubeck_statsd_tcp *std = malloc(sizeof(struct brubeck_statsd_tcp));
     char *address = NULL;
     int port;
-    int multisock = 0;
 
     /** Initialize **/
     event_init();
@@ -386,8 +386,7 @@ brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
         "address", &address,
         "port", &port,
         "workers", &std->worker_count,
-        "multimsg", &std->mmsg_count,
-        "multisock", &multisock);
+        "multimsg", &std->mmsg_count);
 
     /**
       * Set the server 

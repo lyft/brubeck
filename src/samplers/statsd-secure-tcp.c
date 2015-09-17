@@ -2,6 +2,8 @@
 #include <time.h>
 #include "brubeck.h"
 
+#define MAX_READ_WATERMARK  4096
+
 #define error_out(...) {\
     log_splunk("%s:%d: %s():\t", __FILE__, __LINE__, __FUNCTION__);\
     log_splunk(__VA_ARGS__);\

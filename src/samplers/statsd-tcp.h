@@ -26,6 +26,14 @@ struct brubeck_statsd_tcp_msg {
     uint16_t trail_len; /* The length of the trailing string */
 };
 
+typedef struct brubeck_statsd_client_connection {
+    int fd;
+    struct event_base *evbase;
+    struct bufferevent *buf_ev;
+    struct evbuffer *input_buffer;
+} brubeck_client_t;
+ 
+
 struct brubeck_statsd_tcp {
     struct brubeck_sampler sampler;
     pthread_t *workers;
@@ -36,11 +44,6 @@ struct brubeck_statsd_tcp {
     /* The event_base for this client. */
     struct event_base *evbase;
     evutil_socket_t fd;
-};
-
-struct evbuffer_info {
-    const char *name;
-    size_t total_drained;
 };
 
 struct brubeck_statsd_secure_tcp {
@@ -61,13 +64,6 @@ struct brubeck_statsd_secure_tcp {
     evutil_socket_t fd;
 
     HMAC_CTX ctx;
-};
-
-struct brubeck_statsd_client_connection {
-    int fd;
-    struct event_base *evbase;
-    struct bufferevent *buf_ev;
-    struct evbuffer *input_buffer;
 };
 
 typedef struct brubeck_statsd_client_connection brubeck_client_t;
