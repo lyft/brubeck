@@ -212,7 +212,8 @@ read_cb(struct bufferevent *bev, void *ctx)
           *  2. Return  the number of bytes "successfully" parsed
           *  3. Drain "successfully" parsed bytes
           *  4. Return.
-          */          
+          */
+
         successfully_parsed = brubeck_statsd_tcp_msg_parse(&msg, buffer, strlen(buffer));
         if (successfully_parsed <= 0) {
             if (msg.key_len > 0)
@@ -382,7 +383,7 @@ brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
     std->mmsg_count = 1;
 
     json_unpack_or_die(settings,
-        "{s:s, s:i, s?:i, s?:i, s?:b}",
+        "{s:s, s:i, s?:i, s?:i}",
         "address", &address,
         "port", &port,
         "workers", &std->worker_count,
@@ -393,8 +394,6 @@ brubeck_statsd_tcp_new(struct brubeck_server *server, json_t *settings)
       */
 
     brubeck_sampler_init_inet(&std->sampler, server, address, port);
-
-    std->sampler.server = server;
 
     run_worker_threads(std);
     return &std->sampler;

@@ -26,6 +26,8 @@
 typedef double value_t;
 typedef uint64_t hash_t;
 
+typedef enum { false=0, true } bool;
+
 struct brubeck_server;
 struct brubeck_metric;
 
